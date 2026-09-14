@@ -17,7 +17,7 @@ export async function handler(event){
     let path='hotel_discovery_cache?city_name=eq.'+encodeURIComponent(qcity);
     if(qregion) path+='&region=eq.'+encodeURIComponent(qregion);
     path+='&cached_at=gte.'+encodeURIComponent(since)+
-      '&select=*&order=verified_at.desc.nullslast,cached_at.desc&limit='+MAX_RESULTS;
+      '&select=*&order=cached_at.desc&limit='+MAX_RESULTS;
 
     const rows=await sb(path,{headers:{'Prefer':''}});
     return reply(200,{

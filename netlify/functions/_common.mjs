@@ -8,10 +8,27 @@ export function env(){
 }
 export async function sb(path, options={}){
   const {url,key}=env();
-  const headers=Object.assign({'apikey':key,'Authorization':'Bearer '+key,'Content-Type':'application/json','Prefer':'return=representation'},options.headers||{});
+
+  // Supabase 신규 sb_secret_* 키는 JWT가 아니므로 apikey 헤더로만 전달한다.
+  // legacy service_role JWT(eyJ...)를 사용하는 경우에만 Authorization Bearer를 추가한다.
+  const baseHeaders={
+    'apikey':key,
+    'Content-Type':'application/json',
+    'Prefer':'return=representation'
+  };
+  if(!String(key).startsWith('sb_secret_')){
+    baseHeaders['Authorization']='Bearer '+key;
+  }
+
+  const headers=Object.assign(baseHeaders,options.headers||{});
   const r=await fetch(url+'/rest/v1/'+path,Object.assign({},options,{headers}));
-  const text=await r.text(); let data=null; try{data=text?JSON.parse(text):null}catch{data=text}
-  if(!r.ok) throw new Error((data&&data.message)||text||('Supabase '+r.status));
+  const text=await r.text();
+  let data=null;
+  try{data=text?JSON.parse(text):null}catch{data=text}
+  if(!r.ok){
+    const msg=(data&&data.message)||text||('Supabase '+r.status);
+    throw new Error('Supabase '+r.status+': '+msg);
+  }
   return data;
 }
 export function employee(event){
